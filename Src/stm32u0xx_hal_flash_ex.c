@@ -634,7 +634,6 @@ static uint32_t FLASH_OB_GetRDP(void)
 /**
   * @brief  Return the FLASH User Option Byte value.
   * @retval The FLASH User Option Bytes values. It will be a combination of all the following values:
-  *           @arg @ref FLASH_OB_USER_BOR_ENABLE
   *           @arg @ref FLASH_OB_USER_BOR_LEVEL
   *           @arg @ref FLASH_OB_USER_RESET_CONFIG
   *           @arg @ref FLASH_OB_USER_NRST_STOP

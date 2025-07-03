@@ -258,17 +258,17 @@ extern "C" {
 
 /* ADC internal channels related definitions */
 /* Internal voltage reference VrefInt */
-#define VREFINT_CAL_ADDR                   ((uint16_t*) (0x1FFF6EA4UL)) /* Internal voltage reference, address of
+#define VREFINT_CAL_ADDR                   ((const uint16_t*) (0x1FFF6EA4UL)) /* Internal voltage reference, address of
                                            parameter VREFINT_CAL: VrefInt ADC raw data acquired at temperature 30 Deg
                                            (tolerance: +-5 DegC), Vref+ = 3.0 V (tolerance: +-10 mV). */
 #define VREFINT_CAL_VREF                   ( 3000UL)                    /* Analog voltage reference (Vref+) value
                                            with which VrefInt has been calibrated in production
                                            (tolerance: +-10 mV) (unit: mV). */
 /* Temperature sensor */
-#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF6E68UL)) /* Address of parameter TS_CAL1: On STM32U0,
+#define TEMPSENSOR_CAL1_ADDR               ((const uint16_t*) (0x1FFF6E68UL)) /* Address of parameter TS_CAL1:
                                            temperature sensor ADC raw data acquired at temperature  30 DegC
                                            (tolerance: +-5 DegC), Vref+ = 3.0 V (tolerance: +-10 mV). */
-#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF6E8AUL)) /* Address of parameter TS_CAL2: On STM32U0,
+#define TEMPSENSOR_CAL2_ADDR               ((const uint16_t*) (0x1FFF6E8AUL)) /* Address of parameter TS_CAL2:
                                            temperature sensor ADC raw data acquired at temperature 130 DegC
                                            (tolerance: +-5 DegC), Vref+ = 3.0 V (tolerance: +-10 mV). */
 #define TEMPSENSOR_CAL1_TEMP               (( int32_t)   30)            /* Temperature at which temperature sensor

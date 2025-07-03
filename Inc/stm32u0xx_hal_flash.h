@@ -75,6 +75,7 @@ typedef struct
                                    This parameter can be a combination of @ref FLASH_OB_USER_Type */
   uint32_t USERConfig;        /*!< Value of the user option byte (used for OPTIONBYTE_USER).
                                    This parameter can be a combination of
+                                   @ref FLASH_OB_USER_BOR_ENABLE,
                                    @ref FLASH_OB_USER_BOR_LEVEL,
                                    @ref FLASH_OB_USER_RESET_CONFIG,
                                    @ref FLASH_OB_USER_NRST_STOP,
@@ -290,6 +291,7 @@ typedef struct
 /** @defgroup FLASH_OB_USER_Type FLASH Option Bytes User Type
   * @{
   */
+#define OB_USER_BOR_EN                  FLASH_OPTR_BOR_EN                           /*!< BOR reset enable */
 #define OB_USER_BOR_LEV                 FLASH_OPTR_BOR_LEV                          /*!< BOR reset Level */
 #define OB_USER_NRST_STOP               FLASH_OPTR_nRST_STOP                        /*!< Reset generated when entering the stop mode */
 #define OB_USER_NRST_STDBY              FLASH_OPTR_nRST_STDBY                       /*!< Reset generated when entering the standby mode */
@@ -305,11 +307,20 @@ typedef struct
 #define OB_USER_NRST_MODE               FLASH_OPTR_NRST_MODE                        /*!< Reset pin configuration */
 #define OB_USER_INPUT_RESET_HOLDER      FLASH_OPTR_IRHEN                            /*!< Internal reset holder enable */
 
-#define OB_USER_ALL                     (OB_USER_BOR_LEV    | OB_USER_NRST_STOP | OB_USER_NRST_STDBY  | \
-                                         OB_USER_NRST_SHDW  | OB_USER_IWDG_SW   | OB_USER_IWDG_STOP   | \
-                                         OB_USER_IWDG_STDBY | OB_USER_WWDG_SW   | OB_USER_RAM_PARITY_CHECK | \
-                                         OB_USER_NBOOT_SEL  | OB_USER_NBOOT1    | OB_USER_NBOOT0           | \
-                                         OB_USER_NRST_MODE  | OB_USER_INPUT_RESET_HOLDER)   /*!< all option bits */
+#define OB_USER_ALL                     (OB_USER_BOR_EN           | OB_USER_BOR_LEV    | OB_USER_NRST_STOP | \
+                                         OB_USER_NRST_STDBY       | OB_USER_NRST_SHDW  | OB_USER_IWDG_SW   | \
+                                         OB_USER_IWDG_STOP        | OB_USER_IWDG_STDBY | OB_USER_WWDG_SW   | \
+                                         OB_USER_RAM_PARITY_CHECK | OB_USER_NBOOT_SEL  | OB_USER_NBOOT1    | \
+                                         OB_USER_NBOOT0           | OB_USER_NRST_MODE  | OB_USER_INPUT_RESET_HOLDER)   /*!< all option bits */
+/**
+  * @}
+  */
+
+/** @defgroup FLASH_OB_USER_BOR_ENABLE FLASH Option Bytes User BOR enable
+  * @{
+  */
+#define OB_BOR_DISABLE                  0x00000000U        /*!< BOR Reset set to default */
+#define OB_BOR_ENABLE                   FLASH_OPTR_BOR_EN  /*!< Use option byte to define BOR thresholds */
 /**
   * @}
   */
@@ -317,11 +328,10 @@ typedef struct
 /** @defgroup FLASH_OB_USER_BOR_LEVEL FLASH Option Bytes User BOR Level
   * @{
   */
-#define OB_BOR_LEVEL_0      0x00000000U                                    /*!< BOR level 0 with threshold around 1.7V */
-#define OB_BOR_LEVEL_1      FLASH_OPTR_BOR_LEV_0                           /*!< BOR level 1 with threshold around 2.0V */
-#define OB_BOR_LEVEL_2      FLASH_OPTR_BOR_LEV_1                           /*!< BOR level 2 with threshold around 2.2V */
-#define OB_BOR_LEVEL_3      (FLASH_OPTR_BOR_LEV_0 | FLASH_OPTR_BOR_LEV_1)  /*!< BOR level 3 with threshold around 2.5V */
-#define OB_BOR_LEVEL_4      FLASH_OPTR_BOR_LEV_2                           /*!< BOR level 4 with threshold around 2.8V */
+#define OB_BOR_LEVEL_0      0x00000000U                                    /*!< BOR level 0 with threshold around 2.0V */
+#define OB_BOR_LEVEL_1      FLASH_OPTR_BOR_LEV_0                           /*!< BOR level 1 with threshold around 2.2V */
+#define OB_BOR_LEVEL_2      FLASH_OPTR_BOR_LEV_1                           /*!< BOR level 2 with threshold around 2.5V */
+#define OB_BOR_LEVEL_3      (FLASH_OPTR_BOR_LEV_0 | FLASH_OPTR_BOR_LEV_1)  /*!< BOR level 3 with threshold around 2.8V */
 
 /**
   * @}

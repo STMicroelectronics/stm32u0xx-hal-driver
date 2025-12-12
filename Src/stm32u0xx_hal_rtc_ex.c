@@ -1074,47 +1074,42 @@ HAL_StatusTypeDef HAL_RTCEx_DeactivateCalibrationOutPut(RTC_HandleTypeDef *hrtc)
   */
 HAL_StatusTypeDef HAL_RTCEx_SetRefClock(RTC_HandleTypeDef *hrtc)
 {
+  HAL_StatusTypeDef status;
+
   /* Process Locked */
   __HAL_LOCK(hrtc);
 
+  /* Change RTC state */
   hrtc->State = HAL_RTC_STATE_BUSY;
 
   /* Disable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-  /* Set Initialization mode */
-  if (RTC_EnterInitMode(hrtc) != HAL_OK)
-  {
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  /* Enter Initialization mode */
+  status = RTC_EnterInitMode(hrtc);
 
-    /* Set RTC state*/
-    hrtc->State = HAL_RTC_STATE_ERROR;
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_ERROR;
-  }
-  else
+  if (status == HAL_OK)
   {
     /* Enable clockref detection */
     SET_BIT(RTC->CR, RTC_CR_REFCKON);
 
     /* Exit Initialization mode */
-    CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
+    status = RTC_ExitInitMode(hrtc);
   }
 
   /* Enable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
 
-  /* Change RTC state */
-  hrtc->State = HAL_RTC_STATE_READY;
+  if (status == HAL_OK)
+  {
+    /* Change RTC state */
+    hrtc->State = HAL_RTC_STATE_READY;
+  }
 
   /* Process Unlocked */
   __HAL_UNLOCK(hrtc);
 
-  return HAL_OK;
+  return status;
 }
 
 /**
@@ -1124,47 +1119,42 @@ HAL_StatusTypeDef HAL_RTCEx_SetRefClock(RTC_HandleTypeDef *hrtc)
   */
 HAL_StatusTypeDef HAL_RTCEx_DeactivateRefClock(RTC_HandleTypeDef *hrtc)
 {
+  HAL_StatusTypeDef status;
+
   /* Process Locked */
   __HAL_LOCK(hrtc);
 
+  /* Change RTC state */
   hrtc->State = HAL_RTC_STATE_BUSY;
 
   /* Disable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-  /* Set Initialization mode */
-  if (RTC_EnterInitMode(hrtc) != HAL_OK)
-  {
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  /* Enter Initialization mode */
+  status = RTC_EnterInitMode(hrtc);
 
-    /* Set RTC state*/
-    hrtc->State = HAL_RTC_STATE_ERROR;
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_ERROR;
-  }
-  else
+  if (status == HAL_OK)
   {
     /* Disable clockref detection */
     CLEAR_BIT(RTC->CR, RTC_CR_REFCKON);
 
     /* Exit Initialization mode */
-    CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
+    status = RTC_ExitInitMode(hrtc);
   }
 
   /* Enable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
 
-  /* Change RTC state */
-  hrtc->State = HAL_RTC_STATE_READY;
+  if (status == HAL_OK)
+  {
+    /* Change RTC state */
+    hrtc->State = HAL_RTC_STATE_READY;
+  }
 
   /* Process Unlocked */
   __HAL_UNLOCK(hrtc);
 
-  return HAL_OK;
+  return status;
 }
 
 /**

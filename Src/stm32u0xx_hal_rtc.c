@@ -249,7 +249,6 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
   /* Check the RTC peripheral state */
   if (hrtc != NULL)
   {
-    status = HAL_OK;
     /* Check the parameters */
     assert_param(IS_RTC_ALL_INSTANCE(hrtc->Instance));
     assert_param(IS_RTC_HOUR_FORMAT(hrtc->Init.HourFormat));
@@ -324,18 +323,10 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
         /* Disable the write protection for RTC registers */
         __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-        /* Set Initialization mode */
-        if (RTC_EnterInitMode(hrtc) != HAL_OK)
-        {
-          /* Enable the write protection for RTC registers */
-          __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+        /* Enter Initialization mode */
+        status = RTC_EnterInitMode(hrtc);
 
-          /* Set RTC state */
-          hrtc->State = HAL_RTC_STATE_ERROR;
-
-          status = HAL_ERROR;
-        }
-        else
+        if (status == HAL_OK)
         {
           /* Clear RTC_CR FMT, OSEL and POL Bits */
           CLEAR_BIT(RTC->CR, (RTC_CR_FMT | RTC_CR_POL | RTC_CR_OSEL | RTC_CR_TAMPOE));
@@ -349,31 +340,18 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
           MODIFY_REG(RTC->ICSR, RTC_ICSR_BIN | RTC_ICSR_BCDU, hrtc->Init.BinMode | hrtc->Init.BinMixBcdU);
 
           /* Exit Initialization mode */
-          CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
-
-          /* If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
-          if (READ_BIT(RTC->CR, RTC_CR_BYPSHAD) == 0U)
-          {
-            if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK)
-            {
-              /* Enable the write protection for RTC registers */
-              __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-              hrtc->State = HAL_RTC_STATE_ERROR;
-              status = HAL_ERROR;
-            }
-          }
+          status = RTC_ExitInitMode(hrtc);
 
           if (status == HAL_OK)
           {
             MODIFY_REG(RTC->CR, \
                        RTC_CR_TAMPALRM_PU | RTC_CR_TAMPALRM_TYPE | RTC_CR_OUT2EN, \
                        hrtc->Init.OutPutPullUp | hrtc->Init.OutPutType | hrtc->Init.OutPutRemap);
-
-            /* Enable the write protection for RTC registers */
-            __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
           }
         }
+
+        /* Enable the write protection for RTC registers */
+        __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
       }
       else
       {
@@ -389,7 +367,7 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
 
     if (status == HAL_OK)
     {
-      /* Set RTC state */
+      /* Change RTC state */
       hrtc->State = HAL_RTC_STATE_READY;
     }
   }
@@ -413,15 +391,10 @@ HAL_StatusTypeDef HAL_RTC_DeInit(RTC_HandleTypeDef *hrtc)
   /* Disable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
+  /* Enter Initialization mode */
   status = RTC_EnterInitMode(hrtc);
 
-  /* Set Initialization mode */
-  if (status != HAL_OK)
-  {
-    /* Set RTC state */
-    hrtc->State = HAL_RTC_STATE_ERROR;
-  }
-  else
+  if (status == HAL_OK)
   {
     /* Reset all RTC CR register bits */
     CLEAR_REG(RTC->CR);
@@ -439,15 +412,9 @@ HAL_StatusTypeDef HAL_RTC_DeInit(RTC_HandleTypeDef *hrtc)
               RTC_SCR_CALRAF);
 
     /* Exit initialization mode */
-    CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
+    status = RTC_ExitInitMode(hrtc);
 
-    status = HAL_RTC_WaitForSynchro(hrtc);
-
-    if (status != HAL_OK)
-    {
-      hrtc->State = HAL_RTC_STATE_ERROR;
-    }
-    else
+    if (status == HAL_OK)
     {
       /* Reset TAMP registers */
       CLEAR_REG(TAMP->CR1);
@@ -833,7 +800,8 @@ __weak void HAL_RTC_MspDeInit(RTC_HandleTypeDef *hrtc)
   */
 HAL_StatusTypeDef HAL_RTC_SetTime(RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTime, uint32_t Format)
 {
-  uint32_t tmpreg;
+  uint32_t          tmpreg;
+  HAL_StatusTypeDef status;
 
 #ifdef USE_FULL_ASSERT
   /* Check the parameters depending of the Binary mode with 32-bit free-running counter configuration. */
@@ -852,21 +820,10 @@ HAL_StatusTypeDef HAL_RTC_SetTime(RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTim
   /* Disable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-  /* Set Initialization mode */
-  if (RTC_EnterInitMode(hrtc) != HAL_OK)
-  {
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  /* Enter Initialization mode */
+  status = RTC_EnterInitMode(hrtc);
 
-    /* Set RTC state */
-    hrtc->State = HAL_RTC_STATE_ERROR;
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_ERROR;
-  }
-  else
+  if (status == HAL_OK)
   {
     /* Check Binary mode ((32-bit free-running counter) */
     if (READ_BIT(RTC->ICSR, RTC_ICSR_BIN) != RTC_BINARY_ONLY)
@@ -890,7 +847,6 @@ HAL_StatusTypeDef HAL_RTC_SetTime(RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTim
                             ((uint32_t)RTC_ByteToBcd2(sTime->Minutes) << RTC_TR_MNU_Pos) | \
                             ((uint32_t)RTC_ByteToBcd2(sTime->Seconds) << RTC_TR_SU_Pos) | \
                             (((uint32_t)sTime->TimeFormat) << RTC_TR_PM_Pos));
-
       }
       else
       {
@@ -923,34 +879,21 @@ HAL_StatusTypeDef HAL_RTC_SetTime(RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTim
     }
 
     /* Exit Initialization mode */
-    CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
-
-    /* If  CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
-    if (READ_BIT(RTC->CR, RTC_CR_BYPSHAD) == 0U)
-    {
-      if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK)
-      {
-        /* Enable the write protection for RTC registers */
-        __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-        hrtc->State = HAL_RTC_STATE_ERROR;
-
-        /* Process Unlocked */
-        __HAL_UNLOCK(hrtc);
-
-        return HAL_ERROR;
-      }
-    }
-
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-    hrtc->State = HAL_RTC_STATE_READY;
-
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_OK;
+    status = RTC_ExitInitMode(hrtc);
   }
+
+  /* Enable the write protection for RTC registers */
+  __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+
+  if (status == HAL_OK)
+  {
+    hrtc->State = HAL_RTC_STATE_READY;
+  }
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hrtc);
+
+  return status;
 }
 
 /**
@@ -1028,7 +971,8 @@ HAL_StatusTypeDef HAL_RTC_GetTime(const RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef
   */
 HAL_StatusTypeDef HAL_RTC_SetDate(RTC_HandleTypeDef *hrtc, RTC_DateTypeDef *sDate, uint32_t Format)
 {
-  uint32_t datetmpreg;
+  uint32_t          datetmpreg;
+  HAL_StatusTypeDef status;
 
   /* Check the parameters */
   assert_param(IS_RTC_FORMAT(Format));
@@ -1071,55 +1015,30 @@ HAL_StatusTypeDef HAL_RTC_SetDate(RTC_HandleTypeDef *hrtc, RTC_DateTypeDef *sDat
   /* Disable the write protection for RTC registers */
   __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-  /* Set Initialization mode */
-  if (RTC_EnterInitMode(hrtc) != HAL_OK)
-  {
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  /* Enter Initialization mode */
+  status = RTC_EnterInitMode(hrtc);
 
-    /* Set RTC state*/
-    hrtc->State = HAL_RTC_STATE_ERROR;
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_ERROR;
-  }
-  else
+  if (status == HAL_OK)
   {
     /* Set the RTC_DR register */
     WRITE_REG(RTC->DR, (uint32_t)(datetmpreg & RTC_DR_RESERVED_MASK));
 
     /* Exit Initialization mode */
-    CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
-
-    /* If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
-    if (READ_BIT(RTC->CR, RTC_CR_BYPSHAD) == 0U)
-    {
-      if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK)
-      {
-        /* Enable the write protection for RTC registers */
-        __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-        hrtc->State = HAL_RTC_STATE_ERROR;
-
-        /* Process Unlocked */
-        __HAL_UNLOCK(hrtc);
-
-        return HAL_ERROR;
-      }
-    }
-
-    /* Enable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-    hrtc->State = HAL_RTC_STATE_READY ;
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hrtc);
-
-    return HAL_OK;
+    status = RTC_ExitInitMode(hrtc);
   }
+
+  /* Enable the write protection for RTC registers */
+  __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+
+  if (status == HAL_OK)
+  {
+    hrtc->State = HAL_RTC_STATE_READY ;
+  }
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hrtc);
+
+  return status;
 }
 
 /**

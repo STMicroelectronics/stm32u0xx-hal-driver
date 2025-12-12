@@ -315,61 +315,73 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
     /* Set RTC state */
     hrtc->State = HAL_RTC_STATE_BUSY;
 
-    /* Disable the write protection for RTC registers */
-    __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
-
-    /* Set Initialization mode */
-    if (RTC_EnterInitMode(hrtc) != HAL_OK)
+    /* Check whether the calendar needs to be initialized */
+    if (__HAL_RTC_IS_CALENDAR_INITIALIZED(hrtc) == 0U)
     {
-      /* Enable the write protection for RTC registers */
-      __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+      /* Disable the write protection for RTC registers */
+      __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
 
-      /* Set RTC state */
-      hrtc->State = HAL_RTC_STATE_ERROR;
-
-      status = HAL_ERROR;
-    }
-    else
-    {
-      /* Clear RTC_CR FMT, OSEL and POL Bits */
-      CLEAR_BIT(RTC->CR, (RTC_CR_FMT | RTC_CR_POL | RTC_CR_OSEL | RTC_CR_TAMPOE));
-      /* Set RTC_CR register */
-      SET_BIT(RTC->CR, (hrtc->Init.HourFormat | hrtc->Init.OutPut | hrtc->Init.OutPutPolarity));
-
-      /* Configure the RTC PRER */
-      WRITE_REG(RTC->PRER, ((hrtc->Init.SynchPrediv) | (hrtc->Init.AsynchPrediv << RTC_PRER_PREDIV_A_Pos)));
-
-      /* Configure the Binary mode */
-      MODIFY_REG(RTC->ICSR, RTC_ICSR_BIN | RTC_ICSR_BCDU, hrtc->Init.BinMode | hrtc->Init.BinMixBcdU);
-
-      /* Exit Initialization mode */
-      CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
-
-      /* If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
-      if (READ_BIT(RTC->CR, RTC_CR_BYPSHAD) == 0U)
+      /* Set Initialization mode */
+      if (RTC_EnterInitMode(hrtc) != HAL_OK)
       {
-        if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK)
-        {
-          /* Enable the write protection for RTC registers */
-          __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-
-          hrtc->State = HAL_RTC_STATE_ERROR;
-          status = HAL_ERROR;
-        }
-      }
-
-      if (status == HAL_OK)
-      {
-        MODIFY_REG(RTC->CR, \
-                   RTC_CR_TAMPALRM_PU | RTC_CR_TAMPALRM_TYPE | RTC_CR_OUT2EN, \
-                   hrtc->Init.OutPutPullUp | hrtc->Init.OutPutType | hrtc->Init.OutPutRemap);
-
         /* Enable the write protection for RTC registers */
         __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
 
         /* Set RTC state */
-        hrtc->State = HAL_RTC_STATE_READY;
+        hrtc->State = HAL_RTC_STATE_ERROR;
+
+        status = HAL_ERROR;
       }
+      else
+      {
+        /* Clear RTC_CR FMT, OSEL and POL Bits */
+        CLEAR_BIT(RTC->CR, (RTC_CR_FMT | RTC_CR_POL | RTC_CR_OSEL | RTC_CR_TAMPOE));
+        /* Set RTC_CR register */
+        SET_BIT(RTC->CR, (hrtc->Init.HourFormat | hrtc->Init.OutPut | hrtc->Init.OutPutPolarity));
+
+        /* Configure the RTC PRER */
+        WRITE_REG(RTC->PRER, ((hrtc->Init.SynchPrediv) | (hrtc->Init.AsynchPrediv << RTC_PRER_PREDIV_A_Pos)));
+
+        /* Configure the Binary mode */
+        MODIFY_REG(RTC->ICSR, RTC_ICSR_BIN | RTC_ICSR_BCDU, hrtc->Init.BinMode | hrtc->Init.BinMixBcdU);
+
+        /* Exit Initialization mode */
+        CLEAR_BIT(RTC->ICSR, RTC_ICSR_INIT);
+
+        /* If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
+        if (READ_BIT(RTC->CR, RTC_CR_BYPSHAD) == 0U)
+        {
+          if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK)
+          {
+            /* Enable the write protection for RTC registers */
+            __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+
+            hrtc->State = HAL_RTC_STATE_ERROR;
+            status = HAL_ERROR;
+          }
+        }
+
+        if (status == HAL_OK)
+        {
+          MODIFY_REG(RTC->CR, \
+                     RTC_CR_TAMPALRM_PU | RTC_CR_TAMPALRM_TYPE | RTC_CR_OUT2EN, \
+                     hrtc->Init.OutPutPullUp | hrtc->Init.OutPutType | hrtc->Init.OutPutRemap);
+
+          /* Enable the write protection for RTC registers */
+          __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+        }
+      }
+    }
+    else
+    {
+      /* The calendar is already initialized */
+      status = HAL_OK;
+    }
+
+    if (status == HAL_OK)
+    {
+      /* Set RTC state */
+      hrtc->State = HAL_RTC_STATE_READY;
     }
   }
 

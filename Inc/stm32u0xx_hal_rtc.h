@@ -607,6 +607,13 @@ typedef  void (*pRTC_CallbackTypeDef)(RTC_HandleTypeDef *hrtc);  /*!< pointer to
   } while(0U)
 
 /**
+  * @brief  Check whether the RTC Calendar is initialized.
+  * @param  __HANDLE__ specifies the RTC handle.
+  * @retval The state of RTC Calendar initialization (0: not initialized or 1: initialized).
+  */
+#define __HAL_RTC_IS_CALENDAR_INITIALIZED(__HANDLE__)  (UNUSED(__HANDLE__), ((((RTC->ICSR) & (RTC_ICSR_INITS)) == RTC_ICSR_INITS) ? 1U : 0U))
+
+/**
   * @brief  Add 1 hour (summer time change).
   * @param  __HANDLE__ specifies the RTC handle.
   * @param  __BKP__ Backup

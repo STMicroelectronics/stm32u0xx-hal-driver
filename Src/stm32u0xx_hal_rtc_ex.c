@@ -2090,7 +2090,7 @@ uint32_t HAL_RTCEx_BKUPRead(const RTC_HandleTypeDef *hrtc, uint32_t BackupRegist
 void  HAL_RTCEx_BKUPErase(const RTC_HandleTypeDef *hrtc)
 {
   UNUSED(hrtc);
-  WRITE_REG(TAMP->CR2, TAMP_CR2_BKERASE);
+  SET_BIT(TAMP->CR2, TAMP_CR2_BKERASE);
 }
 /**
   * @}
